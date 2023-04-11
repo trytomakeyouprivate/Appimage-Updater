@@ -1,0 +1,71 @@
+#!/bin/bash
+
+#--------- Appimage updater
+
+printf """
+-------------------------------
+
+Appimage Updater
+
+Enter a set of URLs where your Appimages can be downloaded. If this path is static, updates won't work. This is a very basic tool.
+
+-------------------------------
+
+"""
+
+read -P "Enter a path where all your Appimages are stored. > " app-path
+username=$USER
+
+# make the setup repeatable
+source ~/.local/share/systemd/user/appimage-update.sh
+
+cat > ~/.local/share/systemd/user/appimage-update.sh <<EOF
+# Initialize the command string
+command=""
+
+while true; do
+  # Prompt the user for a URL
+  read -p "Enter a URL to an Appimage download location (or x to exit): > " url
+
+  # If the user enters x, exit the loop
+  if [[ $url == "x" ]]; then
+    break
+  fi
+
+  # Add the elements to the command string
+  if [[ -z $command ]]; then
+    command="wget -N $url"
+  else
+    command="$command\n wget -N $url"
+  fi
+done
+<EOF>
+
+# -------------------------------------------------------
+
+cat > ~/.local/share/systemd/user/appimage-updater.service <<EOF
+[Unit]
+Description=Appimage Updater
+After=network.target
+
+[Service]
+ExecStart=/bin/bash $command && /bin/bash notify-send -a "Appimage Updater" "Updates applied"
+Type=oneshot
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+
+# run the service one hour after boot and repeat daily
+[Timer]
+OnBootSec=20min
+OnCalendar=daily
+Persistent=true
+<EOF>
+
+# ---------------------------------------------------------
+
+systemctl disable appimage-updater.service
+systemctl daemon-reload && \
+systemctl enable appimage-updater.service && \
+notify-send -a "Appimage-Updater" "Setup completed"
