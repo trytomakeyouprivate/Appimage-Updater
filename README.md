@@ -12,5 +12,5 @@ Restrictions:
 
 Install:
 ```
-wget -qO- https://github.com/trytomakeyouprivate/Appimage-Updater/raw/main/setup | bash
+wget https://github.com/trytomakeyouprivate/Appimage-Updater/raw/main/setup | bash
 ```
